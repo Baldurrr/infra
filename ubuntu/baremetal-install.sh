@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo "# Disabling restart input #"
+sed -i 's/#$nrconf{restart} = '\"'\"'i'\"'\"';/$nrconf{restart} = '\"'\"'a'\"'\"';/g' /etc/needrestart/needrestart.conf
+echo "OK!"
+echo -e "\n"
+
 # Upgrade Docker-compose
 echo "# Updating repo list #"
 apt update && apt upgrade -y
