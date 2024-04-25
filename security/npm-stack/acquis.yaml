@@ -1,1 +1,4 @@
-
+filenames:
+  - /var/log/npm/*.log
+labels:
+  type: nginx-proxy-manager
