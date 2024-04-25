@@ -1,0 +1,71 @@
+version: '3'
+services:
+ nginx-proxy:
+#    image: 'jc21/nginx-proxy-manager:latest'
+    image: 'lepresidente/nginxproxymanager:latest'
+    container_name: nginx-proxy
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '8881:81'
+      - '443:443'
+    volumes:
+      - /container/sec-stack/proxy-data:/data
+      - /container/sec-stack/letsencrypt:/etc/letsencrypt
+    networks:
+     proxy_lan:
+       ipv4_address: 172.20.0.1
+
+ crowdsec:
+   image: crowdsecurity/crowdsec:latest
+   container_name: crowdsec
+   restart: unless-stopped
+   environment:
+     COLLECTIONS: "crowdsecurity/nginx-proxy-manager crowdsecurity/base-http-scenarios crowdsecurity/http-cve crowdsecurity/http-dos"
+     GID: "${GID-1000}"
+   depends_on:
+     - 'nginx-proxy'
+   volumes:
+    # - /container/sec-stack/crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
+     - /container/sec-stack/crowdsec-db:/var/lib/crowdsec/data/
+     - /container/sec-stack/crowdsec-config:/etc/crowdsec/
+     - /container/sec-stack/proxy-data/logs:/var/log/npm:ro
+   expose:
+      - 8080
+   networks:
+     proxy_lan:
+       ipv4_address: 172.20.0.2
+
+#  dashboard:
+#   build: ./crowdsec/dashboard
+#   container_name: crowdsec-dashboard
+#   restart: unless-stopped
+#   ports:
+#     - 3000:3000
+#   environment:
+#     MB_DB_FILE: /data/metabase.db
+#     MGID: "${GID-1000}"
+#   depends_on:
+#     - 'crowdsec'
+#   volumes:
+#     - crowdsec-db:/metabase-data/
+#   networks:
+#     proxy_lan:
+#       ipv4_address: 172.20.0.3
+
+# volumes:
+#   crowdsec-db:
+#   crowdsec-config:
+
+networks:
+  proxy_lan:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/24
+          ip_range: 172.20.0.0/24
+          gateway: 172.20.0.254
